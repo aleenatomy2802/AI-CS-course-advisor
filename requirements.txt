@@ -9,3 +9,4 @@ networkx==3.2.1
 gunicorn==21.2.0
 google-genai
 python-dotenv
+PyPDF2
