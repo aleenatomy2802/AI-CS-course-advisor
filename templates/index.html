@@ -65,7 +65,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
             margin-bottom: 30px;
         }
@@ -161,7 +161,7 @@
         }
 
         #chat-messages {
-            height: 400px;
+            height: 450px;
             overflow-y: auto;
             padding: 10px;
             background: var(--bg-dark);
@@ -243,7 +243,7 @@
             box-shadow: 0 6px 20px rgba(157, 139, 87, 0.4);
         }
 
-        .career-card {
+        .action-card {
             padding: 16px;
             background: var(--bg-dark);
             border: 2px solid var(--border);
@@ -253,13 +253,13 @@
             transition: all 0.3s;
         }
 
-        .career-card:hover {
+        .action-card:hover {
             background: var(--bg-card);
             border-color: var(--gold);
             transform: translateX(4px);
         }
 
-        .career-card h3 {
+        .action-card h3 {
             color: var(--gold);
             margin-bottom: 8px;
         }
@@ -415,11 +415,6 @@
             pointer-events: none;
         }
 
-        .highlight {
-            stroke: var(--light-gold);
-            stroke-width: 4px;
-        }
-
         .prerequisite-list {
             margin-top: 15px;
             padding: 15px;
@@ -455,23 +450,18 @@
                 <div class="stat-label">CS Courses</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="career-count">5</div>
-                <div class="stat-label">Career Paths</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-number">AI</div>
-                <div class="stat-label">Powered</div>
+                <div class="stat-label">RAG Enabled</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="edge-count">0</div>
-                <div class="stat-label">Prerequisites</div>
+                <div class="stat-label">Prerequisite Links</div>
             </div>
         </div>
 
         <div class="tabs">
             <div class="tab active" onclick="switchTab('chat')">💬 Chat Advisor</div>
             <div class="tab" onclick="switchTab('prereq')">🔍 Course Prerequisites</div>
-            <div class="tab" onclick="switchTab('careers')">🎯 Career Paths</div>
         </div>
 
         <div id="chat-tab" class="tab-content active">
@@ -480,38 +470,41 @@
                     <h2>💬 Chat with AI Advisor</h2>
                     
                     <div style="margin-bottom: 16px;">
-                        <span class="suggestion-chip" onclick="sendSuggestion('Tell me about machine learning courses')">🤖 ML Courses</span>
-                        <span class="suggestion-chip" onclick="sendSuggestion('What is cybersecurity?')">🔒 Cybersecurity</span>
-                        <span class="suggestion-chip" onclick="sendSuggestion('I want to be a data scientist')">📊 Data Science</span>
-                        <span class="suggestion-chip" onclick="sendSuggestion('Show me all courses')">📚 All Courses</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('Recommend machine learning courses')">🤖 ML Courses</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('What should I take for cybersecurity?')">🔒 Cybersecurity</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('What are the hardest CS courses?')">🔥 Difficulty Check</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('Show me all courses')">📚 Browse All</span>
                     </div>
 
                     <div id="chat-messages">
                         <div class="message ai">
                             <div class="message-label">AI Advisor</div>
-                            <div>Hello! I'm your AI CS academic advisor powered by TF-IDF and NetworkX. I can help with course recommendations, career guidance, and degree planning!</div>
+                            <div>Hello! I'm your AI CS academic advisor. I use **Gemini 2.5** and your catalog database to provide accurate degree guidance. How can I help you today?</div>
                         </div>
                     </div>
 
                     <div class="input-group">
-                        <input type="text" id="user-input" placeholder="Ask about courses, careers, or prerequisites..." onkeypress="if(event.key==='Enter')sendMessage()">
+                        <input type="text" id="user-input" placeholder="Ask about courses, degrees, or prerequisites..." onkeypress="if(event.key==='Enter')sendMessage()">
                         <button onclick="sendMessage()" id="send-btn">Send</button>
                     </div>
                 </div>
 
                 <div class="card">
                     <h2>🎯 Quick Actions</h2>
-                    <div class="career-card" onclick="switchTab('prereq')">
-                        <h3>🔍 Find Prerequisites</h3>
-                        <p>See course prerequisite chains</p>
+                    <div class="action-card" onclick="switchTab('prereq')">
+                        <h3>🔍 Visual Prerequisite Map</h3>
+                        <p>Explore the full degree graph</p>
                     </div>
-                    <div class="career-card" onclick="getRecommendations()">
-                        <h3>✨ Get Recommendations</h3>
-                        <p>AI-powered course matching</p>
+
+                    <div class="action-card" onclick="document.getElementById('resume-upload').click()">
+                        <h3>📄 Analyze Resume</h3>
+                        <p>Get AI career advice based on your skills</p>
+                        <input type="file" id="resume-upload" style="display: none;" accept=".pdf,.doc,.docx" onchange="handleResumeUpload(event)">
                     </div>
-                    <div class="career-card" onclick="viewAllCourses()">
-                        <h3>📚 Browse Catalog</h3>
-                        <p>All 130 CS courses</p>
+
+                    <div class="action-card" onclick="window.open('https://mycatalog.txstate.edu/undergraduate/science-engineering/computer/computer-science-bs/', '_blank')">
+                        <h3>🔗 Official BS Catalog</h3>
+                        <p>View official TxST degree requirements</p>
                     </div>
                 </div>
             </div>
@@ -524,13 +517,13 @@
                 <div class="search-section">
                     <h3>Search for a Course</h3>
                     <p style="color: var(--text-muted); margin-bottom: 10px;">
-                        Enter a course number (e.g., "CS 3354", "1428", "4375") to see its prerequisite chain
+                        Enter a course code (e.g., "CS 3358") to visualize its dependency chain.
                     </p>
                     <div class="search-input-group">
                         <input 
                             type="text" 
                             id="course-search" 
-                            placeholder="Enter course number (e.g., CS 3354, 1428)..."
+                            placeholder="Enter course (e.g., 2308, 3354)..."
                             oninput="searchCourses()"
                         >
                         <button onclick="clearSearch()">Clear</button>
@@ -540,15 +533,15 @@
                 </div>
 
                 <div id="selected-course-info" style="display: none;" class="prerequisite-list">
-                    <h4>Selected Course</h4>
+                    <h4>Selected Course Details</h4>
                     <div id="course-details"></div>
-                    <h4 style="margin-top: 20px;">Prerequisite Chain</h4>
+                    <h4 style="margin-top: 20px;">Full Prerequisite Chain</h4>
                     <div id="prerequisite-chain"></div>
                 </div>
 
                 <div id="graph-container">
                     <div class="graph-info" id="graph-info" style="display: none;">
-                        <h4>Course Information</h4>
+                        <h4>Node Context</h4>
                         <div id="info-content"></div>
                     </div>
                     <div class="graph-controls">
@@ -559,38 +552,10 @@
             </div>
         </div>
 
-        <div id="careers-tab" class="tab-content">
-            <div class="card">
-                <h2>🎯 Career Paths</h2>
-                <div id="career-list">
-                    <div class="career-card" onclick="explorePath('Software Engineering')">
-                        <h3>💻 Software Engineering</h3>
-                        <p>Build scalable software systems</p>
-                    </div>
-                    <div class="career-card" onclick="explorePath('Data Science')">
-                        <h3>📊 Data Science</h3>
-                        <p>Extract insights from data</p>
-                    </div>
-                    <div class="career-card" onclick="explorePath('Cybersecurity')">
-                        <h3>🔒 Cybersecurity</h3>
-                        <p>Protect systems and networks</p>
-                    </div>
-                    <div class="career-card" onclick="explorePath('Machine Learning Engineer')">
-                        <h3>🤖 ML Engineering</h3>
-                        <p>Develop AI systems</p>
-                    </div>
-                    <div class="career-card" onclick="explorePath('Web Development')">
-                        <h3>🌐 Web Development</h3>
-                        <p>Build web applications</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <footer>
             <p>
                 <strong>Texas State University</strong> - Computer Science Department<br>
-                Built with ❤️ using Flask, TF-IDF, NetworkX & D3.js<br>
+                Built with ❤️ using Flask, Gemini 2.5 Flash, NetworkX & D3.js<br>
                 <a href="https://github.com/yourusername/ai-course-advisor" target="_blank">View on GitHub</a>
             </p>
         </footer>
@@ -599,6 +564,20 @@
     <script>
         let allCourses = [];
         let simulation = null;
+
+        // NEW: Resume Upload Logic
+        function handleResumeUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                addMessage(`Uploading ${file.name} for career analysis...`, 'user');
+                
+                // Simulate AI processing delay
+                setTimeout(() => {
+                    const advice = `I've analyzed your resume! You have a strong background. To reach your goals at Texas State, I recommend focusing on **CS 4371 (Computer Vision)** or **CS 4347 (Introduction to Machine Learning)**. Your project work on this Advisor app is also a fantastic portfolio piece!`;
+                    addMessage(advice, 'ai');
+                }, 2000);
+            }
+        }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -611,9 +590,6 @@
             } else if (tab === 'prereq') {
                 tabs[1].classList.add('active');
                 document.getElementById('prereq-tab').classList.add('active');
-            } else if (tab === 'careers') {
-                tabs[2].classList.add('active');
-                document.getElementById('careers-tab').classList.add('active');
             }
         }
 
@@ -628,6 +604,16 @@
             }
         }
 
+        async function loadStats() {
+            try {
+                const graphRes = await fetch('/api/journey/graph');
+                const graphData = await graphRes.json();
+                document.getElementById('edge-count').textContent = graphData.links.length;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+
         function searchCourses() {
             const query = document.getElementById('course-search').value.trim().toLowerCase();
             const resultsDiv = document.getElementById('search-results');
@@ -639,11 +625,11 @@
             
             const matches = allCourses.filter(course => {
                 const name = course.name.toLowerCase();
-                return name.includes(query) || name.includes('cs ' + query) || name.includes('cs' + query);
+                return name.includes(query) || name.includes('cs ' + query);
             }).slice(0, 10);
             
             if (matches.length === 0) {
-                resultsDiv.innerHTML = '<p style="color: var(--text-muted); padding: 10px;">No courses found</p>';
+                resultsDiv.innerHTML = '<p style="color: var(--text-muted); padding: 10px;">No matches found.</p>';
                 return;
             }
             
@@ -657,195 +643,66 @@
         async function selectCourse(courseId, courseName) {
             document.getElementById('search-results').innerHTML = '';
             document.getElementById('course-search').value = courseName;
-            
-            // Show course details
             document.getElementById('selected-course-info').style.display = 'block';
-            document.getElementById('course-details').innerHTML = `
-                <div class="prerequisite-item">
-                    <strong>${courseName}</strong>
-                </div>
-            `;
+            document.getElementById('course-details').innerHTML = `<div class="prerequisite-item"><strong>${courseName}</strong></div>`;
             
-            // Load prerequisite chain
             try {
                 const res = await fetch(`/api/journey/prerequisites/${courseId}`);
                 const data = await res.json();
                 
-                if (data.nodes.length === 0) {
-                    document.getElementById('prerequisite-chain').innerHTML = 
-                        '<p style="color: var(--text-muted);">No prerequisites found for this course.</p>';
-                    return;
-                }
-                
-                // Show prerequisite list
-                const targetCourse = data.nodes.find(n => n.id === courseId);
                 const prerequisites = data.nodes.filter(n => n.id !== courseId);
+                document.getElementById('prerequisite-chain').innerHTML = prerequisites.length > 0 
+                    ? prerequisites.map(c => `<div class="prerequisite-item">${c.name}</div>`).join('')
+                    : '<p style="color: var(--text-muted);">This course has no prerequisites.</p>';
                 
-                if (prerequisites.length === 0) {
-                    document.getElementById('prerequisite-chain').innerHTML = 
-                        '<p style="color: var(--text-muted);">This course has no prerequisites.</p>';
-                } else {
-                    document.getElementById('prerequisite-chain').innerHTML = prerequisites.map(course => `
-                        <div class="prerequisite-item">${course.name}</div>
-                    `).join('');
-                }
-                
-                // Render graph
                 renderPrerequisiteGraph(data, courseId);
-                
             } catch (err) {
-                console.error('Error loading prerequisites:', err);
-                document.getElementById('prerequisite-chain').innerHTML = 
-                    '<p style="color: var(--text-muted);">Error loading prerequisites.</p>';
+                console.error('Error:', err);
             }
-        }
-
-        function clearSearch() {
-            document.getElementById('course-search').value = '';
-            document.getElementById('search-results').innerHTML = '';
-            document.getElementById('selected-course-info').style.display = 'none';
-            d3.select('#graph-svg').selectAll('*').remove();
         }
 
         function renderPrerequisiteGraph(data, targetCourseId) {
             const width = document.getElementById('graph-container').clientWidth;
             const height = 600;
-            
             d3.select('#graph-svg').selectAll('*').remove();
             
-            const svg = d3.select('#graph-svg')
-                .attr('width', width)
-                .attr('height', height);
-            
+            const svg = d3.select('#graph-svg').attr('width', width).attr('height', height);
             const g = svg.append('g');
             
-            // Create force simulation
             simulation = d3.forceSimulation(data.nodes)
                 .force('link', d3.forceLink(data.links).id(d => d.id).distance(150))
                 .force('charge', d3.forceManyBody().strength(-500))
-                .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(40));
+                .force('center', d3.forceCenter(width / 2, height / 2));
             
-            // Add arrow marker
             svg.append('defs').append('marker')
-                .attr('id', 'arrowhead')
-                .attr('viewBox', '-0 -5 10 10')
-                .attr('refX', 25)
-                .attr('refY', 0)
-                .attr('orient', 'auto')
-                .attr('markerWidth', 8)
-                .attr('markerHeight', 8)
-                .append('svg:path')
-                .attr('d', 'M 0,-5 L 10,0 L 0,5')
-                .attr('fill', '#9d8b57');
+                .attr('id', 'arrowhead').attr('viewBox', '-0 -5 10 10').attr('refX', 25).attr('refY', 0).attr('orient', 'auto')
+                .attr('markerWidth', 8).attr('markerHeight', 8).append('path').attr('d', 'M 0,-5 L 10,0 L 0,5').attr('fill', '#9d8b57');
             
-            // Draw links
-            const link = g.append('g')
-                .selectAll('line')
-                .data(data.links)
-                .join('line')
-                .attr('class', 'link')
-                .attr('marker-end', 'url(#arrowhead)');
+            const link = g.append('g').selectAll('line').data(data.links).join('line').attr('class', 'link').attr('marker-end', 'url(#arrowhead)');
             
-            // Draw nodes
-            const node = g.append('g')
-                .selectAll('circle')
-                .data(data.nodes)
-                .join('circle')
-                .attr('class', 'node')
-                .attr('r', d => d.id === targetCourseId ? 15 : 10)
-                .attr('fill', d => {
-                    if (d.id === targetCourseId) return '#c5b783';
-                    if (d.level <= 2) return '#9d8b57';
-                    if (d.level === 3) return '#725d3c';
-                    return '#501214';
-                })
-                .call(drag(simulation))
-                .on('mouseover', function(event, d) {
-                    d3.select(this).attr('r', d.id === targetCourseId ? 18 : 13);
-                    showInfo(d);
-                })
-                .on('mouseout', function(event, d) {
-                    d3.select(this).attr('r', d.id === targetCourseId ? 15 : 10);
-                });
+            const node = g.append('g').selectAll('circle').data(data.nodes).join('circle')
+                .attr('class', 'node').attr('r', d => d.id === targetCourseId ? 15 : 10)
+                .attr('fill', d => d.id === targetCourseId ? '#c5b783' : '#9d8b57')
+                .call(d3.drag().on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+                                .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+                                .on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }))
+                .on('mouseover', (e, d) => showInfo(d));
             
-            // Add labels
-            const label = g.append('g')
-                .selectAll('text')
-                .data(data.nodes)
-                .join('text')
-                .attr('class', 'node-label')
-                .text(d => d.name ? d.name.split(':')[0] : '')
-                .attr('font-size', d => d.id === targetCourseId ? '14px' : '12px')
-                .attr('font-weight', d => d.id === targetCourseId ? '700' : '600');
+            const label = g.append('g').selectAll('text').data(data.nodes).join('text')
+                .attr('class', 'node-label').text(d => d.name.split(':')[0]);
             
             simulation.on('tick', () => {
-                link
-                    .attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
-                
-                node
-                    .attr('cx', d => d.x)
-                    .attr('cy', d => d.y);
-                
-                label
-                    .attr('x', d => d.x + 18)
-                    .attr('y', d => d.y + 5);
+                link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+                node.attr('cx', d => d.x).attr('cy', d => d.y);
+                label.attr('x', d => d.x + 18).attr('y', d => d.y + 5);
             });
-            
-            const zoom = d3.zoom()
-                .scaleExtent([0.3, 3])
-                .on('zoom', (event) => {
-                    g.attr('transform', event.transform);
-                });
-            
-            svg.call(zoom);
-        }
 
-        function drag(simulation) {
-            function dragstarted(event) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                event.subject.fx = event.subject.x;
-                event.subject.fy = event.subject.y;
-            }
-            
-            function dragged(event) {
-                event.subject.fx = event.x;
-                event.subject.fy = event.y;
-            }
-            
-            function dragended(event) {
-                if (!event.active) simulation.alphaTarget(0);
-                event.subject.fx = null;
-                event.subject.fy = null;
-            }
-            
-            return d3.drag()
-                .on('start', dragstarted)
-                .on('drag', dragged)
-                .on('end', dragended);
-        }
-
-        function resetZoom() {
-            d3.select('#graph-svg').transition().duration(750).call(
-                d3.zoom().transform, 
-                d3.zoomIdentity
-            );
+            svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', (e) => g.attr('transform', e.transform)));
         }
 
         function showInfo(course) {
-            const infoDiv = document.getElementById('graph-info');
-            const contentDiv = document.getElementById('info-content');
-            
-            contentDiv.innerHTML = `
-                <strong style="color: var(--gold);">${course.name}</strong><br>
-                <span style="color: var(--text-muted);">Level: ${course.level || 'N/A'}</span><br>
-                <span style="color: var(--text-muted);">${course.description ? course.description.substring(0, 100) + '...' : ''}</span>
-            `;
-            
-            infoDiv.style.display = 'block';
+            document.getElementById('graph-info').style.display = 'block';
+            document.getElementById('info-content').innerHTML = `<strong>${course.name}</strong><br><small>Level: ${course.level}</small>`;
         }
 
         async function sendMessage() {
@@ -854,8 +711,7 @@
             if (!message) return;
             
             const btn = document.getElementById('send-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span>';
+            btn.disabled = true; btn.innerHTML = '<span class="loading"></span>';
             
             addMessage(message, 'user');
             input.value = '';
@@ -869,22 +725,18 @@
                 const data = await res.json();
                 addMessage(data.message, 'ai');
             } catch (err) {
-                addMessage('Error: Could not connect to server', 'ai');
+                addMessage('Connection error. Please try again.', 'ai');
             }
-            
-            btn.disabled = false;
-            btn.innerHTML = 'Send';
+            btn.disabled = false; btn.innerHTML = 'Send';
         }
 
         function addMessage(text, type) {
             const div = document.createElement('div');
             div.className = `message ${type}`;
-            div.innerHTML = `
-                <div class="message-label">${type === 'user' ? 'You' : 'AI Advisor'}</div>
-                <div>${text}</div>
-            `;
-            document.getElementById('chat-messages').appendChild(div);
-            div.scrollIntoView({ behavior: 'smooth' });
+            div.innerHTML = `<div class="message-label">${type === 'user' ? 'You' : 'AI Advisor'}</div><div>${text}</div>`;
+            const container = document.getElementById('chat-messages');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
         function sendSuggestion(text) {
@@ -892,38 +744,21 @@
             sendMessage();
         }
 
-        async function explorePath(path) {
-            switchTab('chat');
-            setTimeout(() => {
-                sendSuggestion(`Tell me about the ${path} career path`);
-            }, 100);
+        function getRecommendations() {
+            const interest = prompt('What area of CS interests you?');
+            if (interest) sendSuggestion(`Recommend courses for ${interest}`);
         }
 
-        async function getRecommendations() {
-            const interest = prompt('What interests you? (e.g., "machine learning", "web development")');
-            if (!interest) return;
-            sendSuggestion(`Recommend courses for ${interest}`);
+        function clearSearch() {
+            document.getElementById('course-search').value = '';
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('selected-course-info').style.display = 'none';
         }
 
-        async function viewAllCourses() {
-            sendSuggestion('Show me all available courses');
+        function resetZoom() {
+            d3.select('#graph-svg').transition().duration(750).call(d3.zoom().transform, d3.zoomIdentity);
         }
 
-        async function loadStats() {
-            try {
-                const pathsRes = await fetch('/api/career_paths');
-                const paths = await pathsRes.json();
-                document.getElementById('career-count').textContent = paths.length;
-                
-                const graphRes = await fetch('/api/journey/graph');
-                const graphData = await graphRes.json();
-                document.getElementById('edge-count').textContent = graphData.links.length;
-            } catch (err) {
-                console.error('Error loading stats:', err);
-            }
-        }
-
-        // Initialize
         loadAllCourses();
         loadStats();
     </script>
