@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Course Advisor - Texas State University</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --maroon: #501214;
+            --gold: #9d8b57;
+            --light-gold: #c5b783;
+            --dark-maroon: #3d0e0f;
+            --white: #ffffff;
+            --cream: #f5f1e8;
+            --bg-dark: #1a0b0c;
+            --bg-card: #2d1516;
+            --text: #f5f1e8;
+            --text-muted: #b8a88a;
+            --border: #5a3335;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--dark-maroon) 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--maroon), var(--dark-maroon));
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(80, 18, 20, 0.5);
+            border: 2px solid var(--gold);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--cream);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--dark-maroon));
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            border: 2px solid var(--gold);
+            box-shadow: 0 4px 12px rgba(157, 139, 87, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: 2px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .tab:hover {
+            background: var(--bg-card);
+            border-color: var(--gold);
+        }
+
+        .tab.active {
+            background: var(--maroon);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 2px solid var(--gold);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--gold);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        #chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, var(--maroon), var(--dark-maroon));
+            margin-left: auto;
+            text-align: right;
+            border: 1px solid var(--gold);
+        }
+
+        .message.ai {
+            background: var(--bg-card);
+            margin-right: auto;
+            border: 1px solid var(--border);
+        }
+
+        .message-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-bottom: 4px;
+            color: var(--gold);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            background: var(--bg-dark);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--light-gold);
+            box-shadow: 0 0 0 3px rgba(157, 139, 87, 0.2);
+        }
+
+        button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--maroon), var(--dark-maroon));
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--dark-maroon), var(--maroon));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(157, 139, 87, 0.4);
+        }
+
+        .career-card {
+            padding: 16px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .career-card:hover {
+            background: var(--bg-card);
+            border-color: var(--gold);
+            transform: translateX(4px);
+        }
+
+        .career-card h3 {
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .search-section {
+            background: var(--bg-dark);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            margin-bottom: 20px;
+        }
+
+        .search-section h3 {
+            color: var(--gold);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .search-result-item {
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: var(--maroon);
+            border-color: var(--gold);
+        }
+
+        #graph-container {
+            width: 100%;
+            height: 600px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graph-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(45, 21, 22, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--gold);
+            max-width: 300px;
+            z-index: 10;
+        }
+
+        .graph-info h4 {
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .graph-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .graph-controls button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--gold);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .suggestion-chip {
+            display: inline-block;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin: 4px;
+            transition: all 0.2s;
+        }
+
+        .suggestion-chip:hover {
+            background: var(--maroon);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 2px solid var(--gold);
+            margin-top: 40px;
+        }
+
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .node {
+            stroke: var(--gold);
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+
+        .node:hover {
+            stroke: var(--light-gold);
+            stroke-width: 3px;
+        }
+
+        .link {
+            stroke: var(--gold);
+            stroke-opacity: 0.6;
+            stroke-width: 2px;
+        }
+
+        .node-label {
+            fill: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .highlight {
+            stroke: var(--light-gold);
+            stroke-width: 4px;
+        }
+
+        .prerequisite-list {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .prerequisite-list h4 {
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .prerequisite-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: var(--bg-card);
+            border-left: 3px solid var(--gold);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 AI Course Advisor</h1>
+            <p>Texas State University Computer Science</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="course-count">130</div>
+                <div class="stat-label">CS Courses</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="career-count">5</div>
+                <div class="stat-label">Career Paths</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">AI</div>
+                <div class="stat-label">Powered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="edge-count">0</div>
+                <div class="stat-label">Prerequisites</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('chat')">💬 Chat Advisor</div>
+            <div class="tab" onclick="switchTab('prereq')">🔍 Course Prerequisites</div>
+            <div class="tab" onclick="switchTab('careers')">🎯 Career Paths</div>
+        </div>
+
+        <div id="chat-tab" class="tab-content active">
+            <div class="main-grid">
+                <div class="card">
+                    <h2>💬 Chat with AI Advisor</h2>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <span class="suggestion-chip" onclick="sendSuggestion('Tell me about machine learning courses')">🤖 ML Courses</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('What is cybersecurity?')">🔒 Cybersecurity</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('I want to be a data scientist')">📊 Data Science</span>
+                        <span class="suggestion-chip" onclick="sendSuggestion('Show me all courses')">📚 All Courses</span>
+                    </div>
+
+                    <div id="chat-messages">
+                        <div class="message ai">
+                            <div class="message-label">AI Advisor</div>
+                            <div>Hello! I'm your AI CS academic advisor powered by TF-IDF and NetworkX. I can help with course recommendations, career guidance, and degree planning!</div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="user-input" placeholder="Ask about courses, careers, or prerequisites..." onkeypress="if(event.key==='Enter')sendMessage()">
+                        <button onclick="sendMessage()" id="send-btn">Send</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🎯 Quick Actions</h2>
+                    <div class="career-card" onclick="switchTab('prereq')">
+                        <h3>🔍 Find Prerequisites</h3>
+                        <p>See course prerequisite chains</p>
+                    </div>
+                    <div class="career-card" onclick="getRecommendations()">
+                        <h3>✨ Get Recommendations</h3>
+                        <p>AI-powered course matching</p>
+                    </div>
+                    <div class="career-card" onclick="viewAllCourses()">
+                        <h3>📚 Browse Catalog</h3>
+                        <p>All 130 CS courses</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="prereq-tab" class="tab-content">
+            <div class="card">
+                <h2>🔍 Course Prerequisite Finder</h2>
+                
+                <div class="search-section">
+                    <h3>Search for a Course</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 10px;">
+                        Enter a course number (e.g., "CS 3354", "1428", "4375") to see its prerequisite chain
+                    </p>
+                    <div class="search-input-group">
+                        <input 
+                            type="text" 
+                            id="course-search" 
+                            placeholder="Enter course number (e.g., CS 3354, 1428)..."
+                            oninput="searchCourses()"
+                        >
+                        <button onclick="clearSearch()">Clear</button>
+                    </div>
+                    
+                    <div id="search-results" class="search-results"></div>
+                </div>
+
+                <div id="selected-course-info" style="display: none;" class="prerequisite-list">
+                    <h4>Selected Course</h4>
+                    <div id="course-details"></div>
+                    <h4 style="margin-top: 20px;">Prerequisite Chain</h4>
+                    <div id="prerequisite-chain"></div>
+                </div>
+
+                <div id="graph-container">
+                    <div class="graph-info" id="graph-info" style="display: none;">
+                        <h4>Course Information</h4>
+                        <div id="info-content"></div>
+                    </div>
+                    <div class="graph-controls">
+                        <button onclick="resetZoom()">Reset View</button>
+                    </div>
+                    <svg id="graph-svg" width="100%" height="600"></svg>
+                </div>
+            </div>
+        </div>
+
+        <div id="careers-tab" class="tab-content">
+            <div class="card">
+                <h2>🎯 Career Paths</h2>
+                <div id="career-list">
+                    <div class="career-card" onclick="explorePath('Software Engineering')">
+                        <h3>💻 Software Engineering</h3>
+                        <p>Build scalable software systems</p>
+                    </div>
+                    <div class="career-card" onclick="explorePath('Data Science')">
+                        <h3>📊 Data Science</h3>
+                        <p>Extract insights from data</p>
+                    </div>
+                    <div class="career-card" onclick="explorePath('Cybersecurity')">
+                        <h3>🔒 Cybersecurity</h3>
+                        <p>Protect systems and networks</p>
+                    </div>
+                    <div class="career-card" onclick="explorePath('Machine Learning Engineer')">
+                        <h3>🤖 ML Engineering</h3>
+                        <p>Develop AI systems</p>
+                    </div>
+                    <div class="career-card" onclick="explorePath('Web Development')">
+                        <h3>🌐 Web Development</h3>
+                        <p>Build web applications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                <strong>Texas State University</strong> - Computer Science Department<br>
+                Built with ❤️ using Flask, TF-IDF, NetworkX & D3.js<br>
+                <a href="https://github.com/yourusername/ai-course-advisor" target="_blank">View on GitHub</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        let allCourses = [];
+        let simulation = null;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            const tabs = document.querySelectorAll('.tab');
+            if (tab === 'chat') {
+                tabs[0].classList.add('active');
+                document.getElementById('chat-tab').classList.add('active');
+            } else if (tab === 'prereq') {
+                tabs[1].classList.add('active');
+                document.getElementById('prereq-tab').classList.add('active');
+            } else if (tab === 'careers') {
+                tabs[2].classList.add('active');
+                document.getElementById('careers-tab').classList.add('active');
+            }
+        }
+
+        async function loadAllCourses() {
+            try {
+                const res = await fetch('/api/courses');
+                const data = await res.json();
+                allCourses = data.courses;
+                document.getElementById('course-count').textContent = data.count;
+            } catch (err) {
+                console.error('Error loading courses:', err);
+            }
+        }
+
+        function searchCourses() {
+            const query = document.getElementById('course-search').value.trim().toLowerCase();
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (query.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            const matches = allCourses.filter(course => {
+                const name = course.name.toLowerCase();
+                return name.includes(query) || name.includes('cs ' + query) || name.includes('cs' + query);
+            }).slice(0, 10);
+            
+            if (matches.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: var(--text-muted); padding: 10px;">No courses found</p>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = matches.map(course => `
+                <div class="search-result-item" onclick="selectCourse(${course.id}, '${course.name.replace(/'/g, "\\'")}')">
+                    <strong>${course.name}</strong>
+                </div>
+            `).join('');
+        }
+
+        async function selectCourse(courseId, courseName) {
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('course-search').value = courseName;
+            
+            // Show course details
+            document.getElementById('selected-course-info').style.display = 'block';
+            document.getElementById('course-details').innerHTML = `
+                <div class="prerequisite-item">
+                    <strong>${courseName}</strong>
+                </div>
+            `;
+            
+            // Load prerequisite chain
+            try {
+                const res = await fetch(`/api/journey/prerequisites/${courseId}`);
+                const data = await res.json();
+                
+                if (data.nodes.length === 0) {
+                    document.getElementById('prerequisite-chain').innerHTML = 
+                        '<p style="color: var(--text-muted);">No prerequisites found for this course.</p>';
+                    return;
+                }
+                
+                // Show prerequisite list
+                const targetCourse = data.nodes.find(n => n.id === courseId);
+                const prerequisites = data.nodes.filter(n => n.id !== courseId);
+                
+                if (prerequisites.length === 0) {
+                    document.getElementById('prerequisite-chain').innerHTML = 
+                        '<p style="color: var(--text-muted);">This course has no prerequisites.</p>';
+                } else {
+                    document.getElementById('prerequisite-chain').innerHTML = prerequisites.map(course => `
+                        <div class="prerequisite-item">${course.name}</div>
+                    `).join('');
+                }
+                
+                // Render graph
+                renderPrerequisiteGraph(data, courseId);
+                
+            } catch (err) {
+                console.error('Error loading prerequisites:', err);
+                document.getElementById('prerequisite-chain').innerHTML = 
+                    '<p style="color: var(--text-muted);">Error loading prerequisites.</p>';
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('course-search').value = '';
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('selected-course-info').style.display = 'none';
+            d3.select('#graph-svg').selectAll('*').remove();
+        }
+
+        function renderPrerequisiteGraph(data, targetCourseId) {
+            const width = document.getElementById('graph-container').clientWidth;
+            const height = 600;
+            
+            d3.select('#graph-svg').selectAll('*').remove();
+            
+            const svg = d3.select('#graph-svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g');
+            
+            // Create force simulation
+            simulation = d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.links).id(d => d.id).distance(150))
+                .force('charge', d3.forceManyBody().strength(-500))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(40));
+            
+            // Add arrow marker
+            svg.append('defs').append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '-0 -5 10 10')
+                .attr('refX', 25)
+                .attr('refY', 0)
+                .attr('orient', 'auto')
+                .attr('markerWidth', 8)
+                .attr('markerHeight', 8)
+                .append('svg:path')
+                .attr('d', 'M 0,-5 L 10,0 L 0,5')
+                .attr('fill', '#9d8b57');
+            
+            // Draw links
+            const link = g.append('g')
+                .selectAll('line')
+                .data(data.links)
+                .join('line')
+                .attr('class', 'link')
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // Draw nodes
+            const node = g.append('g')
+                .selectAll('circle')
+                .data(data.nodes)
+                .join('circle')
+                .attr('class', 'node')
+                .attr('r', d => d.id === targetCourseId ? 15 : 10)
+                .attr('fill', d => {
+                    if (d.id === targetCourseId) return '#c5b783';
+                    if (d.level <= 2) return '#9d8b57';
+                    if (d.level === 3) return '#725d3c';
+                    return '#501214';
+                })
+                .call(drag(simulation))
+                .on('mouseover', function(event, d) {
+                    d3.select(this).attr('r', d.id === targetCourseId ? 18 : 13);
+                    showInfo(d);
+                })
+                .on('mouseout', function(event, d) {
+                    d3.select(this).attr('r', d.id === targetCourseId ? 15 : 10);
+                });
+            
+            // Add labels
+            const label = g.append('g')
+                .selectAll('text')
+                .data(data.nodes)
+                .join('text')
+                .attr('class', 'node-label')
+                .text(d => d.name ? d.name.split(':')[0] : '')
+                .attr('font-size', d => d.id === targetCourseId ? '14px' : '12px')
+                .attr('font-weight', d => d.id === targetCourseId ? '700' : '600');
+            
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                
+                label
+                    .attr('x', d => d.x + 18)
+                    .attr('y', d => d.y + 5);
+            });
+            
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+            
+            svg.call(zoom);
+        }
+
+        function drag(simulation) {
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+            
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+            
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+            
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+
+        function resetZoom() {
+            d3.select('#graph-svg').transition().duration(750).call(
+                d3.zoom().transform, 
+                d3.zoomIdentity
+            );
+        }
+
+        function showInfo(course) {
+            const infoDiv = document.getElementById('graph-info');
+            const contentDiv = document.getElementById('info-content');
+            
+            contentDiv.innerHTML = `
+                <strong style="color: var(--gold);">${course.name}</strong><br>
+                <span style="color: var(--text-muted);">Level: ${course.level || 'N/A'}</span><br>
+                <span style="color: var(--text-muted);">${course.description ? course.description.substring(0, 100) + '...' : ''}</span>
+            `;
+            
+            infoDiv.style.display = 'block';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const btn = document.getElementById('send-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>';
+            
+            addMessage(message, 'user');
+            input.value = '';
+            
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message, user_id: 'web'})
+                });
+                const data = await res.json();
+                addMessage(data.message, 'ai');
+            } catch (err) {
+                addMessage('Error: Could not connect to server', 'ai');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = 'Send';
+        }
+
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.innerHTML = `
+                <div class="message-label">${type === 'user' ? 'You' : 'AI Advisor'}</div>
+                <div>${text}</div>
+            `;
+            document.getElementById('chat-messages').appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function sendSuggestion(text) {
+            document.getElementById('user-input').value = text;
+            sendMessage();
+        }
+
+        async function explorePath(path) {
+            switchTab('chat');
+            setTimeout(() => {
+                sendSuggestion(`Tell me about the ${path} career path`);
+            }, 100);
+        }
+
+        async function getRecommendations() {
+            const interest = prompt('What interests you? (e.g., "machine learning", "web development")');
+            if (!interest) return;
+            sendSuggestion(`Recommend courses for ${interest}`);
+        }
+
+        async function viewAllCourses() {
+            sendSuggestion('Show me all available courses');
+        }
+
+        async function loadStats() {
+            try {
+                const pathsRes = await fetch('/api/career_paths');
+                const paths = await pathsRes.json();
+                document.getElementById('career-count').textContent = paths.length;
+                
+                const graphRes = await fetch('/api/journey/graph');
+                const graphData = await graphRes.json();
+                document.getElementById('edge-count').textContent = graphData.links.length;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+
+        // Initialize
+        loadAllCourses();
+        loadStats();
+    </script>
+</body>
+</html>
