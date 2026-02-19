@@ -85,6 +85,25 @@ def create_app():
 # Create the application instance
 app = create_app()
 
+from course_importer import import_courses_from_website
+from recommender import CourseRecommender
+
+@app.route('/api/seed-database-secret-url')
+
+def seed_db():
+    # 1. Scrape the courses into the live Render database
+    result = import_courses_from_website()
+    
+    # 2. Re-train the AI brain now that we have data
+    if result.get("success"):
+        from models import Course
+        all_courses = Course.query.all()
+        rec = CourseRecommender(app)
+        rec.train(all_courses)
+        return f"SUCCESS! Imported {result['course_count']} courses and trained AI."
+    
+    return f"FAILED: {result.get('error')}"
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
