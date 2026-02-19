@@ -39,7 +39,6 @@ The application features a hybrid matching engine that combines TF-IDF vectoriza
 
 ---
 
-## Local Development Instructions
 
 ## Local Development Instructions
 
