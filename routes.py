@@ -4,10 +4,14 @@ Grounded in Texas State University CS Data
 """
 
 from flask import render_template, request, jsonify, current_app
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from models import Course
 import logging
 
 logger = logging.getLogger('routes')
+
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 def register_routes(app):
     """Register all application routes"""
@@ -18,6 +22,7 @@ def register_routes(app):
         return render_template('index.html')
 
     @app.route('/api/chat', methods=['POST'])
+    @limiter.limit("20 per minute;100 per hour")
     def chat():
         """Handle RAG-powered chat with Gemini 2.5"""
         try:
@@ -36,6 +41,7 @@ def register_routes(app):
             return jsonify({"error": "I'm having trouble connecting to the advisor."}), 500
 
     @app.route('/api/analyze_resume', methods=['POST'])
+    @limiter.limit("5 per minute;20 per hour")
     def analyze_resume():
         """Real endpoint for PDF resume analysis"""
         try:

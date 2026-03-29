@@ -5,8 +5,11 @@ A web-based academic advisor for CS students at Texas State University
 
 from flask import Flask
 from extensions import db
+from dotenv import load_dotenv
 import os
 import logging
+
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(
@@ -22,12 +25,23 @@ def create_app():
     
     # Configure the Flask app
     basedir = os.path.abspath(os.path.dirname(__file__))
-    instance_path = os.path.join(basedir, "instance")
-    os.makedirs(instance_path, exist_ok=True)
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "courses.db")}'
+
+    # Use DATABASE_URL from environment (set by Render) or fall back to local SQLite
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Render injects postgres:// but SQLAlchemy requires postgresql://
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    else:
+        instance_path = os.path.join(basedir, 'instance')
+        os.makedirs(instance_path, exist_ok=True)
+        database_url = f'sqlite:///{os.path.join(instance_path, "courses.db")}'
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY environment variable is not set.")
+    app.config['SECRET_KEY'] = secret_key
     
     # Initialize extensions
     db.init_app(app)
@@ -75,7 +89,8 @@ def create_app():
             logger.info("Loaded existing recommender model")
         
         # Register routes (after components initialized)
-        from routes import register_routes
+        from routes import register_routes, limiter
+        limiter.init_app(app)
         register_routes(app)
         logger.info("Routes registered")
         
@@ -85,24 +100,24 @@ def create_app():
 # Create the application instance
 app = create_app()
 
-from course_importer import import_courses_from_website
-from recommender import CourseRecommender
-
-@app.route('/api/seed-database-secret-url')
-
+@app.cli.command("seed-db")
 def seed_db():
-    # 1. Scrape the courses into the live Render database
+    """Import courses from the TXST catalog and train the recommender model."""
+    from course_importer import import_courses_from_website
+    from recommender import CourseRecommender
+    from models import Course
+
+    print("Importing courses...")
     result = import_courses_from_website()
-    
-    # 2. Re-train the AI brain now that we have data
+
     if result.get("success"):
-        from models import Course
+        print(f"Imported {result['course_count']} courses. Training recommender...")
         all_courses = Course.query.all()
         rec = CourseRecommender(app)
         rec.train(all_courses)
-        return f"SUCCESS! Imported {result['course_count']} courses and trained AI."
-    
-    return f"FAILED: {result.get('error')}"
+        print("Done.")
+    else:
+        print(f"FAILED: {result.get('error')}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
