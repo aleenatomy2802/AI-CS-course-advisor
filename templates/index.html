@@ -110,6 +110,28 @@
         #full-graph-container.visible { display: block; }
         .graph-tooltip { position: absolute; background: var(--charcoal); color: var(--white); padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 10; white-space: nowrap; }
 
+        /* Typing indicator */
+        .typing-indicator { display: flex; gap: 4px; padding: 1rem 1.5rem; align-items: center; }
+        .typing-indicator span { width: 8px; height: 8px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .chat-layout { grid-template-columns: 1fr; }
+            .sidebar { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; }
+            .action-card { min-width: 200px; flex-shrink: 0; }
+            .chain-layout { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header-content { flex-direction: column; gap: 1rem; text-align: center; }
+            nav { justify-content: center; gap: 1rem; }
+            .search-row { flex-direction: column; }
+            .search-row input { max-width: 100%; }
+            .autocomplete-list { width: 100%; }
+        }
+
         footer { text-align: center; padding: 2rem; color: #888; font-size: 0.85rem; border-top: 1px solid #e0e0e0; margin-top: auto; }
         .chain-node { cursor: pointer; }
         .chain-node:hover circle { filter: brightness(1.2); }
@@ -234,13 +256,14 @@
             const file = event.target.files[0];
             if (!file) return;
             addMessage('Uploading ' + file.name + '...', 'user');
-            addMessage("Analyzing your resume against the course catalog...", 'ai');
+            showTypingIndicator();
             const fd = new FormData(); fd.append('file', file);
             try {
                 const res = await fetch('/api/analyze_resume', { method: 'POST', body: fd });
                 const data = await res.json();
+                removeTypingIndicator();
                 addMessage(data.message || data.error, 'ai');
-            } catch (err) { addMessage("Error connecting to server.", 'ai'); }
+            } catch (err) { removeTypingIndicator(); addMessage("Error connecting to server.", 'ai'); }
         }
 
         // ==================== NAV ====================
@@ -265,12 +288,26 @@
             const btn = document.getElementById('send-btn');
             btn.disabled = true; btn.innerText = '...';
             addMessage(msg, 'user'); input.value = '';
+            showTypingIndicator();
             try {
                 const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, user_id: 'web' }) });
                 const data = await res.json();
+                removeTypingIndicator();
                 addMessage(data.message, 'ai');
-            } catch (err) { addMessage("System Error. Please try again.", 'ai'); }
+            } catch (err) { removeTypingIndicator(); addMessage("System Error. Please try again.", 'ai'); }
             btn.disabled = false; btn.innerText = 'Send';
+        }
+        function showTypingIndicator() {
+            const box = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'message ai';
+            div.id = 'typing-indicator';
+            div.innerHTML = '<div class="message-label">Advisor</div><div class="typing-indicator"><span></span><span></span><span></span></div>';
+            box.appendChild(div); box.scrollTop = box.scrollHeight;
+        }
+        function removeTypingIndicator() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
         }
         function addMessage(text, type) {
             const div = document.createElement('div');
