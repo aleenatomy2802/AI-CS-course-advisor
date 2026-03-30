@@ -54,6 +54,19 @@ def create_app():
         # Create database tables
         db.create_all()
         logger.info("Database tables created")
+
+        # Auto-seed on first deploy if database is empty
+        if Course.query.count() == 0:
+            logger.info("No courses found — auto-seeding database...")
+            try:
+                from course_importer import import_courses_from_website
+                result = import_courses_from_website()
+                if result.get("success"):
+                    logger.info(f"Auto-seed complete: {result['course_count']} courses imported")
+                else:
+                    logger.warning(f"Auto-seed failed: {result.get('error')}")
+            except Exception as e:
+                logger.error(f"Auto-seed error: {e}")
         
         # Import and initialize components
         from ai_advisor import AIAdvisor
@@ -76,17 +89,13 @@ def create_app():
         os.makedirs(model_dir, exist_ok=True)
         recommender_model_path = os.path.join(model_dir, 'recommender_model.pkl')
         
-        if not os.path.exists(recommender_model_path):
+        courses = Course.query.all()
+        if courses:
             logger.info("Training recommender model...")
-            courses = Course.query.all()
-            if courses:
-                app.recommender.train(courses)
-                logger.info(f"Recommender trained with {len(courses)} courses")
-            else:
-                logger.warning("No courses found - run data import first")
+            app.recommender.train(courses)
+            logger.info(f"Recommender trained with {len(courses)} courses")
         else:
-            app.recommender.load_model()
-            logger.info("Loaded existing recommender model")
+            logger.warning("No courses found - recommender not trained")
         
         # Register routes (after components initialized)
         from routes import register_routes, limiter
