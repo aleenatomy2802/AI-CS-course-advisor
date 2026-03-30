@@ -54,19 +54,6 @@ def create_app():
         # Create database tables
         db.create_all()
         logger.info("Database tables created")
-
-        # Auto-seed on first deploy if database is empty
-        if Course.query.count() == 0:
-            logger.info("No courses found — auto-seeding database...")
-            try:
-                from course_importer import import_courses_from_website
-                result = import_courses_from_website()
-                if result.get("success"):
-                    logger.info(f"Auto-seed complete: {result['course_count']} courses imported")
-                else:
-                    logger.warning(f"Auto-seed failed: {result.get('error')}")
-            except Exception as e:
-                logger.error(f"Auto-seed error: {e}")
         
         # Import and initialize components
         from ai_advisor import AIAdvisor
@@ -108,6 +95,26 @@ def create_app():
 
 # Create the application instance
 app = create_app()
+
+# Auto-seed on first deploy if database is empty
+with app.app_context():
+    from models import Course
+    if Course.query.count() == 0:
+        logger.info("No courses found — auto-seeding database...")
+        try:
+            from course_importer import import_courses_from_website
+            result = import_courses_from_website()
+            if result.get("success"):
+                logger.info(f"Auto-seed complete: {result['course_count']} courses imported")
+                # Train recommender with freshly imported courses
+                all_courses = Course.query.all()
+                if all_courses:
+                    app.recommender.train(all_courses)
+                    logger.info("Recommender trained after auto-seed")
+            else:
+                logger.warning(f"Auto-seed failed: {result.get('error')}")
+        except Exception as e:
+            logger.error(f"Auto-seed error: {e}")
 
 @app.cli.command("seed-db")
 def seed_db():
