@@ -38,6 +38,10 @@ def create_app():
 
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,       # Test connections before using them
+        'pool_recycle': 280,         # Recycle connections before Neon closes them
+    }
     secret_key = os.environ.get('SECRET_KEY')
     if not secret_key:
         raise RuntimeError("SECRET_KEY environment variable is not set.")
