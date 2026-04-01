@@ -2,7 +2,7 @@
 Intelligent Academic Guidance via Retrieval-Augmented Generation
 
 **Live Demo:** https://cs-course-advisor.up.railway.app/
-*(Note: Hosted on Render's free tier. If the application has been idle, it may take up to 60 seconds for the initial server spin-up.)*
+
 
 ## The Advising Gap
 Navigating a university degree plan is a complex and often overwhelming undertaking. For many students—particularly those who are the first in their families to attend college—understanding prerequisite chains, elective requirements, and optimal course sequencing can be a significant barrier to timely graduation. Academic advisors provide critical support, but they are frequently strained by high student-to-advisor ratios. This often leaves students to decipher dense, static course catalogs on their own. 
