@@ -1,7 +1,7 @@
 # AI Course Advisor: Texas State University Computer Science
 Intelligent Academic Guidance via Retrieval-Augmented Generation
 
-**Live Demo:** https://ai-cs-course-advisor.onrender.com/
+**Live Demo:** https://cs-course-advisor.up.railway.app/
 *(Note: Hosted on Render's free tier. If the application has been idle, it may take up to 60 seconds for the initial server spin-up.)*
 
 ## The Advising Gap
