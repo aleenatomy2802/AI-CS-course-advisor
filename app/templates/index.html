@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academic Advisor | Texas State University</title>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z58TC163TK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z58TC163TK');
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -169,6 +177,7 @@
                             <div class="message-label">AI Advisor</div>
                             Hello! I am your automated academic guide. I can help you plan your degree, find prerequisites, or audit your skills.
                             <br><br><em>Try asking: "What are the prerequisites for CS 3358?"</em>
+                            <br><br><span style="font-size:0.78rem;color:#999;">Note: Messages are processed by Google Gemini AI. Do not share sensitive personal information.</span>
                         </div>
                     </div>
                     <div style="padding: 0 1.5rem;">
@@ -183,7 +192,7 @@
                 </div>
                 <div class="sidebar">
                     <div class="action-card" onclick="document.getElementById('resume-upload').click()">
-                        <h3>📄 Upload Resume</h3><p>Get a gap analysis of your current skills vs. coursework.</p>
+                        <h3>📄 Upload Resume</h3><p>Get a gap analysis of your current skills vs. coursework.</p><p style="font-size:0.72rem;color:#999;margin-top:6px;">Resume text is processed by Google Gemini AI and is not stored.</p>
                         <input type="file" id="resume-upload" style="display: none;" accept=".pdf" onchange="handleResumeUpload(event)">
                     </div>
                     <div class="action-card" onclick="switchTab('prereq')">
@@ -191,6 +200,9 @@
                     </div>
                     <div class="action-card" onclick="window.open('https://cs.txst.edu/', '_blank')">
                         <h3>🎓 Department Site</h3><p>Visit the official Computer Science homepage.</p>
+                    </div>
+                    <div class="action-card" onclick="window.open('https://www.registrar.txst.edu/persistent-links/final-exam-schedule/final-exam-spring.html', '_blank')">
+                        <h3>📅 Final Exam Schedule</h3><p>Look up your final exam day, time, and location.</p>
                     </div>
                 </div>
             </div>
@@ -263,6 +275,7 @@
                 const data = await res.json();
                 removeTypingIndicator();
                 addMessage(data.message || data.error, 'ai');
+                gtag('event', 'resume_uploaded');
             } catch (err) { removeTypingIndicator(); addMessage("Error connecting to server.", 'ai'); }
         }
 
@@ -294,7 +307,10 @@
                 const data = await res.json();
                 removeTypingIndicator();
                 addMessage(data.message, 'ai');
-            } catch (err) { removeTypingIndicator(); addMessage("System Error. Please try again.", 'ai'); }
+                gtag('event', 'chat_message', { question_length: msg.length });
+            } catch (err) { removeTypingIndicator(); addMessage("System Error. Please try again.", 'ai');
+                gtag('event', 'chat_error');
+            }
             btn.disabled = false; btn.innerText = 'Send';
         }
         function showTypingIndicator() {

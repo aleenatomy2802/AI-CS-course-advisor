@@ -18,4 +18,4 @@ COPY . .
 # Cloud Run injects PORT — gunicorn must listen on it
 ENV PORT=8080
 
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app
