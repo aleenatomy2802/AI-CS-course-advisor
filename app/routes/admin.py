@@ -159,9 +159,20 @@ def patch_prereqs():
                 added += 1
 
     db.session.commit()
+
+    # Rebuild the in-memory graph so the visual map reflects the new prerequisites
+    try:
+        from flask import current_app
+        current_app.journey_map.build_course_graph()
+        graph_rebuilt = True
+    except Exception as e:
+        logger.warning(f"Could not rebuild graph: {e}")
+        graph_rebuilt = False
+
     return jsonify({
         "status": "done",
         "added": added,
         "skipped": skipped,
         "not_found": not_found,
+        "graph_rebuilt": graph_rebuilt,
     })

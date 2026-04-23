@@ -29,6 +29,8 @@ with app.app_context():
                 if courses:
                     app.recommender.train(courses)
                     logger.info("Recommender trained after seed")
+                    app.journey_map.build_course_graph()
+                    logger.info("JourneyMap rebuilt after seed")
             else:
                 logger.warning(f"Auto-seed failed: {result.get('error')}")
         except Exception as e:
